@@ -1,9 +1,4 @@
 // Simple Hex Dump utility.
-//
-// Example output:
-// ./HexDump.sh Makefile
-// 616C6C3A0A096A61 7661632048657844 756D702E6A617661 0A0A72756E3A0A09  | all.  javac HexDump.java  run.   |
-// 2E2F48657844756D 702E736820524541 444D452E6D640A                     | ..HexDump.sh README.md           |
 
 import java.io.DataInputStream;
 import java.io.FileInputStream;
@@ -15,60 +10,85 @@ class HexDump {
     public static void main(final String args[]) {
         String fileName = args[0];
 
+        // try to open the file
+        DataInputStream inputStream = null;
         try {
-            DataInputStream inputStream = new DataInputStream(new FileInputStream(fileName));
-            byte lowerNibble, upperNibble, b;
-            int j = 0;
-            int k = 0;
+            inputStream = new DataInputStream(new FileInputStream(fileName));
+        } catch (Exception e) {
+            System.out.println("Error opening file: " + e);
+            System.exit(1);
+        }
 
-            StringBuilder text = new StringBuilder();
-
+        // initial read
+        byte b = 0;
+        try {
             b = (byte) inputStream.read();
-            while (b >= 0) {
-                if (Character.isWhitespace((char) b))
-                    text.append(" ");
-                else if (Character.isLetterOrDigit((char) b))
-                    text.append((char) b);
-                else
-                    text.append(".");
+        } catch (Exception e) {
+            System.out.println("Error reading file: " + e);
+            System.exit(1);
+        }
 
-                // split byte into two nibbles and convert to hex
-                lowerNibble = (byte) (0x0F & b);
-                upperNibble = (byte) ((b >>> 4) & 0x0F);
-                System.out.print("" + lookUps[upperNibble] + lookUps[lowerNibble]);
-                j++;
+        // book-keeping variables
+        byte lowerNibble, upperNibble;
+        int j = 0, k = 0;
 
-                // process word
-                if (j >= 8) {
-                    System.out.print(" ");
-                    j = 0;
-                    k++;
-                }
+        // buffer for human-readable text
+        StringBuilder text = new StringBuilder();
 
-                // process line
-                if (k >= 4) {
-                    System.out.println(" | " + text + " |");
-                    text = new StringBuilder();
-                    k = 0;
-                }
+        // process file
+        while (b >= 0) {
 
-                b = (byte) inputStream.read();
+            // classify input as human-readable or not
+            if (Character.isWhitespace((char) b))
+                text.append(" ");
+            else if (Character.isLetterOrDigit((char) b))
+                text.append((char) b);
+            else
+                text.append(".");
+
+            // split byte into two nibbles and convert to hex
+            lowerNibble = (byte) (0x0F & b);
+            upperNibble = (byte) ((b >>> 4) & 0x0F);
+            System.out.print("" + lookUps[upperNibble] + lookUps[lowerNibble]);
+           
+            // process word
+            j++;
+            if (j >= 8) {
+                System.out.print(" ");
+                j = 0;
+                k++;
             }
 
+            // process line
+            if (k >= 4) {
+                System.out.println(" | " + text + " |");
+                text = new StringBuilder();
+                k = 0;
+            }
+
+            // read next byte
+            try {
+                b = (byte) inputStream.read();
+            } catch (Exception e) {
+                System.out.println("Error reading file: " + e);
+                System.exit(1);
+            }
+        }
+
+        // close the file
+        try {
             inputStream.close();
-
-            // print out the last line if it is not complete
-            for (int i = 0; i < ((17 * (4 - k)) - (2 * j)); i++)
-                System.out.print(" ");
-            for (int i = 0; i < (32 - ((8 * k) + j)); i++)
-                text.append(" ");
-            System.out.println(" | " + text + " |");
-
+        } catch (Exception e) {
+            System.out.println("Error closing file: " + e);
         }
 
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.exit(0);
+        // print out the last line if it is not complete
+        for (int i = 0; i < ((17 * (4 - k)) - (2 * j)); i++)
+            System.out.print(" ");
+        for (int i = 0; i < (32 - ((8 * k) + j)); i++)
+            text.append(" ");
+        System.out.println(" | " + text + " |");
+
     }
+
 }
