@@ -27,6 +27,7 @@ class HexDump {
         }
 
         // book-keeping variables
+        long offset = 0;
         int j = 0, k = 0;
 
         // buffer for human-readable text
@@ -35,6 +36,13 @@ class HexDump {
         // process file
         while (b >= 0) {
 
+            // keep track of the offset and print as needed
+            if (j==0 && k == 0) {
+                System.out.print(String.format("%08d: ", offset) );
+            }
+            offset++;
+
+            
             // write out the hex value right away
             System.out.print(HexDump.formatHex(b));
 
