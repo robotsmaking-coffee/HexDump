@@ -4,8 +4,6 @@ import java.io.DataInputStream;
 import java.io.FileInputStream;
 
 class HexDump {
-    private static final char lookUps[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
-            'F' };
 
     public static void main(final String args[]) {
         String fileName = args[0];
@@ -29,7 +27,6 @@ class HexDump {
         }
 
         // book-keeping variables
-        byte lowerNibble, upperNibble;
         int j = 0, k = 0;
 
         // buffer for human-readable text
@@ -38,19 +35,12 @@ class HexDump {
         // process file
         while (b >= 0) {
 
-            // classify input as human-readable or not
-            if (Character.isWhitespace((char) b))
-                text.append(" ");
-            else if (Character.isLetterOrDigit((char) b))
-                text.append((char) b);
-            else
-                text.append(".");
+            // write out the hex value right away
+            System.out.print(HexDump.formatHex(b));
 
-            // split byte into two nibbles and convert to hex
-            lowerNibble = (byte) (0x0F & b);
-            upperNibble = (byte) ((b >>> 4) & 0x0F);
-            System.out.print("" + lookUps[upperNibble] + lookUps[lowerNibble]);
-           
+            // buffer the human-readable text
+            text.append(HexDump.formatReadable(b));
+
             // process word
             j++;
             if (j >= 8) {
@@ -89,6 +79,33 @@ class HexDump {
             text.append(" ");
         System.out.println(" | " + text + " |");
 
+    }
+
+    // convert a byte to a human-readable character
+    private static String formatReadable(byte b) {
+
+        // convert control characters to a space
+        if (Character.isWhitespace((char) b))
+            return " ";
+
+        // convert letters and digits to themselves
+        if (Character.isLetterOrDigit((char) b))
+            return "" + (char) b;
+
+        // not a human-readable character
+        return ".";
+    }
+
+    // convert a byte to a hex string
+    private static final char lookUps[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
+            'F' };
+    private static final int LOOKUP_MASK = 0x0F;
+    private static final int SHIFT_NIBBLE = 4;
+
+    private static String formatHex(byte b) {
+        byte lowerNibble = (byte) (LOOKUP_MASK & b);
+        byte upperNibble = (byte) ((b >>> SHIFT_NIBBLE) & LOOKUP_MASK);
+        return "" + lookUps[upperNibble] + lookUps[lowerNibble];
     }
 
 }
